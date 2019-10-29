@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Auto Tag</li>
+  </ol>
+</nav>
+	<form id="imageUploadForm" enctype="multipart/form-data" method="post" action="/findsimilarsample" class="mt-4">
+		<div class="form-group row">
+			<label for="photo" class="col-sm-4 col-form-label col-form-label-lg">Choose File</label>
+			<div class="col-sm-6 custom-file">
+				<input type="file" class="custom-file-input" id="photo" name="files" multiple>
+				<label class="custom-file-label" for="photo">Choose file</label>
+			</div>
+		</div>
+	</form>
+	<div class="row mt-4" id="info">
+	</div>
+	<script>
+	$(document).ready(function(){
+		$("#imageUploadForm").on('submit', function(e){
+			e.preventDefault();
+            var len = document.getElementById('photo').files.length;
+            if(len > 0){
+              for(i = 0; i < len; i ++){
+                var formData = new FormData();
+                formData.append('files', document.getElementById('photo').files[i]);
+                autoTag(formData, i);
+              }
+            }
+         });
+	});
+
+
+		function autoTag(formData, index){
+			$.ajax({
+				//"crossDomain": true,
+				type: "POST",
+				url: "/imageclassfication",
+				contentType: false,
+				data: formData,
+				cache: false,
+				dataType: "json",
+				processData: false,
+				success: function(data) {
+	              filename = data['name'];
+				  results = data['response']['predictions'][0]['results'];	              
+ 				  displayInfo(filename, index, results);
+				},
+				error : function(xhr, text, error) {
+					alert("Fail to call API");
+				}
+			});
+		}
+
+    function displayInfo(filename, index, results){
+        info = $("#info");
+        infoTableName = "info-table-" + index;
+        info.append('<div row class="row mt-2" id="info-' + index + '"></div>');
+        infotmp = $('#info-' + index);
+        infotmp.append('<div class="col-md-4"><img src="static/resources/tmp/' + filename +'" class="img-thumbnail"></div>');
+        infotmp.append("<div class='col-md-6'><table class='table text-center mx-auto'  id='" + infoTableName +"' style='width: 600px;'></table></div>");
+        info_table = $('#' + infoTableName);
+        $.each(results, function(index){
+            result = results[index];
+            label = result['label'];
+            score = result['score'];
+            appendInfo(info_table, label, score);
+        });
+    }
+
+    function appendInfo(info_table, label, score){
+        score = (score * 100).toFixed(2);
+        info_table.append("<tr>");
+        info_table.append("<td><strong>" + label + "</strong></td><td><b>" + score + "%</b></td>");
+        info_table.append("</tr>");
+    }
+
+	$(function() {
+        $('#photo').change(function(){
+            file_input = this;
+            $('#img-preview').empty();
+            $('#info').empty();
+            $("#imageUploadForm").submit();
+        });
+	});
+	</script>
+{% endblock %}

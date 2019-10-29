@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/fontawesome.css">
+    <link rel="stylesheet" href="static/css/brands.css">
+    <link rel="stylesheet" href="static/css/solid.css">
+    <link rel="stylesheet" href="static/css/bootstrap-table.min.css">
+    <script src="static/js/jquery-3.4.1.min.js"></script>
+    <script src="static/js/bootstrap.bundle.min.js"></script>
+    <script src="static/js/bootstrap-table.min.js"></script>
+    <!--<script src="static/js/popper.min.js"></script-->
+
+    <title>SAP Leonardo Machine Learning API Demo</title>
+  </head>
+  <body>
+    <nav class="navbar navbar-dark bg-dark">
+      <a class="navbar-brand" href="/">
+        <img src="static/images/sap-logo-svg.png"  alt="">
+      </a>
+    </nav>
+    <div class="container mt-4">
+		<div class="jumbotron">
+		  <h1 class="display-4">SAP Leonardo Machine Learning API Demo.</h1>
+		  <p class="lead">This is a demo to show the capabilities of SAP Leornardo Machine Learning. We combined more than one APIs to implement scenarios present here.</p>
+		  <hr class="my-4">
+		  <p>The more information please refer to <a href="https://api.sap.com" class="text-blue" target="_blank">https://api.sap.com&nbsp;&nbsp;<i class="fas fa-external-link-alt"></i></a></p>
+		</div>
+    	<div class="row card-deck">
+				<div class="card">
+				  <div class="card-header">
+				    Auto Tag
+				  </div>
+				  <div class="card-body">
+				    <h5 class="card-title">Auto Detect Objects and Add Tags</h5>
+				    <p class="card-text">Detect the objects from massive uploaded images, and add tags on each of image. The API includes:</p>
+				    <p>
+				    	<a href="https://api.sap.com/api/image_classification_api/resource" target="_blank">Inference Service for Customizable Image Classification&nbsp;&nbsp;<i class="fas fa-external-link-alt"></i></a>
+				    </p>
+				  </div>
+				  <div class="card-footer">
+				    <a href="/autotag" class="btn btn-primary">Demo</a>
+				  </div>
+				</div>    			
+				<div class="card">
+				  <div class="card-header">
+				    Face Recognition
+				  </div>
+				  <div class="card-body">
+				    <h5 class="card-title">Detect Face and Recognition</h5>
+				    <p class="card-text">Detect face from image and compare to the face from camera to see if they match each other. The API includes:</p>
+				    <p>
+				    	<a href="https://api.sap.com/api/face_feature_extraction_api/resource" target="_blank">Inference Service for Face Feature Extraction&nbsp;&nbsp;<i class="fas fa-external-link-alt"></i></a>
+				    </p>
+				    <p>
+				    	<a href="https://api.sap.com/api/similarity_scoring_api/resource" target="_blank">Inference Service for Similarity Scoring&nbsp;&nbsp;<i class="fas fa-external-link-alt"></i></a>
+				    </p>
+				  </div>
+				  <div class="card-footer">
+				    <a href="/facerecognize" class="btn btn-primary">Demo</a>
+				  </div>
+				</div>    			
+    	</div>
+    	<div class="row mt-4 card-deck">
+				<div class="card">
+				  <div class="card-header">
+				    Translation Service
+				  </div>
+				  <div class="card-body">
+				    <h5 class="card-title">Detect and Translate Text</h5>
+				    <p class="card-text">Recognize text from PDF or Image, detect and translate the text. The API includes:</p>
+				    <p>
+				    	<a href="https://api.sap.com/api/ocr_api/resource" target="_blank">Inference Service for Optical Character Recognition (OCR)&nbsp;&nbsp;<i class="fas fa-external-link-alt"></i></a>
+				    </p>
+				    <p>
+				    	<a href="https://api.sap.com/api/language_detection_api/resource" target="_blank">Inference Service for Language Detection&nbsp;&nbsp;<i class="fas fa-external-link-alt"></i></a>
+				    </p>
+				    <p>
+				    	<a href="https://api.sap.com/api/translation_api/resource" target="_blank">Inference Service for Machine Translation&nbsp;&nbsp;<i class="fas fa-external-link-alt"></i></a>
+				    </p>
+				  </div>
+				  <div class="card-footer">
+				    <a href="/translateservice" class="btn btn-primary">Demo</a>
+				  </div>
+				</div>    			
+				<div class="card">
+				  <div class="card-header">
+				    Receipt Recognition
+				  </div>
+				  <div class="card-body">
+				    <h5 class="card-title">Receipt Recognition</h5>
+				    <p class="card-text">Recognize the text from the picture of receipt. The API includes:</p>
+				    <p>
+				    	<a href="https://api.sap.com/api/scene_text_recognition_api/resource" target="_blank">Inference Service for Scene Text Recognition&nbsp;&nbsp;<i class="fas fa-external-link-alt"></i></a>
+				    </p>
+				  </div>
+				  <div class="card-footer">
+				    <a href="/recieptrecog" class="btn btn-primary">Demo</a>
+				  </div>
+				</div>    			
+    	</div>
+    </div>
+
+  </body>
+</html>    

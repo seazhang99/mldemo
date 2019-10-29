@@ -1,0 +1,126 @@
+{% extends "layout.html" %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Translation Service</li>
+  </ol>
+</nav>
+	<form id="fileUploadForm" enctype="multipart/form-data" method="post" action="/findsimilarsample" class="mt-4">
+		<div class="form-group row">
+			<label for="photo" class="col-sm-4 col-form-label col-form-label-lg">Choose File</label>
+			<div class="col-sm-6 custom-file">
+				<input type="file" class="custom-file-input" id="photo" name="files">
+				<label class="custom-file-label" for="photo">Choose file</label>
+			</div>
+		</div>
+	</form>
+	<div class="d-flex justify-content-center mt-4">
+        <textarea class="form-control" id="ocr-content" rows="15"></textarea>
+	</div>
+    <div class="row mt-4">
+    	<div class="col-md-10">
+	        <div class="input-group mb-3">
+	          <div class="input-group-prepend">
+	            <label class="input-group-text" for="target-lang">Target Language</label>
+	          </div>
+	          <select class="custom-select" id="target-lang">
+	            <option selected>Choose...</option>
+	            <option value="en">English</option>
+	            <option value="zh" selected>Chinese</option>
+	            <option value="de">German</option>
+	          </select>
+	        </div>
+	    </div>
+    	<div class="col-md-2">
+		    <button class="btn btn-outline-secondary" type="button" onclick="javascript:translateIt();">Translate</button>
+		</div>
+    </div>
+	<div class="d-flex justify-content-center mt-4">
+        <textarea class="form-control" id="translate-content" rows="15"></textarea>
+	</div>
+<div class="modal fade" id="waitingModal" tabindex="-1" role="dialog" aria-labelledby="waitingModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="waitingModalTitle">Working on</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body d-flex justify-content-center">
+        <img src="static/images/pleasewait.gif">
+      </div>
+    </div>
+  </div>
+</div>
+	<script>
+
+	$(function() {
+    $(document).ajaxStart(function(){
+        $('#waitingModal').modal('show');            
+    }).ajaxStop(function(){
+        $('#waitingModal').modal('hide');            
+    });
+
+        $('#photo').change(function(){
+            $("#fileUploadForm").submit();
+        });
+	});
+
+	$(document).ready(function(){
+		$("#fileUploadForm").on('submit', function(e){
+			e.preventDefault();
+			var form = new FormData($('#fileUploadForm')[0]);
+			form.append('target-lang', $('#target-lang').val());
+			$.ajax({
+				//"crossDomain": true,
+				type: "POST",
+				url: "/ocrtrans",
+				contentType: false,
+				data: form,
+				cache: false,
+				dataType: "json",
+				processData: false,
+				success: function(data) {
+					$('#ocr-content').val(data['ocr_content']);
+					$('#translate-content').val(data['translate_content']);
+				},
+				error : function(xhr, text, error) {
+					alert("Fail to call API");
+				}
+			});
+		});
+	});
+
+	function translateIt(){
+          var txt = $.trim($('#ocr-content').val());
+          if(! txt){
+            alert("Nothing to tranlate");
+            return;
+          }
+
+			var form = new FormData();
+			form.append('target-lang', $('#target-lang').val());
+			form.append('content', txt);
+			$.ajax({
+				//"crossDomain": true,
+				type: "POST",
+				url: "/contenttrans",
+				contentType: false,
+				data: form,
+				cache: false,
+				dataType: "json",
+				processData: false,
+				success: function(data) {
+					$('#translate-content').val(data['translate_content']);
+				},
+				error : function(xhr, text, error) {
+					alert("Fail to call API");
+				}
+			});
+
+	}
+
+	</script>
+{% endblock %}

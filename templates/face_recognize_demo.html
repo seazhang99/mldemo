@@ -1,0 +1,222 @@
+{% extends "layout.html" %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Face Detection</li>
+  </ol>
+</nav>
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active" id="upload-tab" data-toggle="tab" href="#upload" role="tab" aria-controls="upload" aria-selected="true">Upload Identity</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="identify-tab" data-toggle="tab" href="#identify" role="tab" aria-controls="identify" aria-selected="false">Identify</a>
+  </li>
+</ul>
+<div class="tab-content" id="myTabContent">
+    <div id="upload" class="tab-pane show active" role="tabpanel" aria-labelledby="upload-tab">
+        <form id="imageUploadForm" enctype="multipart/form-data" method="post" action="/findsimilarsample" class="mt-4">
+            <div class="form-group row">
+                <label for="photo" class="col-sm-4 col-form-label col-form-label-lg">Choose File</label>
+                <div class="col-sm-6 custom-file">
+                    <input type="file" class="custom-file-input" id="photo" name="files">
+                    <label class="custom-file-label" for="photo">Choose file</label>
+                </div>
+            </div>
+        </form>
+        <div class="d-flex justify-content-center invisible mt-4" id="waiting-indicator1">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <img id="img-preview" height=300 class="rounded-lg mx-auto d-block"/>
+        </div>
+        <div class="row mt-4" id="info">
+        </div>
+    </div>
+    <div id="identify" class="tab-pane" role="tabpanel" aria-labelledby="identify-tab">
+        <div class="row d-flex justify-content-center mt-4">
+            <video id="webcam" class="bg-dark" width="400" height="300" preload="auto" loop playsinline autoplay></video>	
+        </div>
+        <div class="row d-flex justify-content-center mt-2">
+            <div class="btn-group" role="group" aria-label="buttonGroup">
+        	  <button type="button" class="btn btn-secondary" onclick="startCamera();"><i class="fas fa-play"></i></button>
+        	  <button type="button" class="btn btn-secondary" onclick="stopCamera();"><i class="fas fa-stop"></i></button>
+        	  <button type="button" class="btn btn-secondary" onclick="snapshot();"><i class="fas fa-camera"></i></button>
+        	</div>
+        </div>
+        <div class="row d-flex justify-content-center mt-4">
+          <div class="col-sm-2">Threshold</div>
+          <input type="text" class="col-sm-4" id="threshold" value="97">
+        </div>
+        <div class="d-flex justify-content-center mt-4 invisible" id="waiting-indicator2">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+        <div class="row mt-4 d-flex justify-content-center" id="simscore-info">
+        </div>
+        <div class="row d-flex justify-content-center mt-2 invisible">
+            <form method=POST enctype="multipart/form-data" action="/inference_sync" id="imageform">
+                <input type="file" accept="image/png, image/jpeg, image/gif" id="webcam-photo" name="webcam-file"/>
+            </form>
+            <canvas id="canvas" width="400" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+	var video = document.getElementById('webcam');
+	var canvas = document.getElementById('canvas');
+	var context = canvas.getContext('2d');
+    var file_input;
+
+    $(document).ajaxStart(function(){
+        $('#waiting-indicator1').removeClass('invisible');            
+        $('#waiting-indicator2').removeClass('invisible');            
+    }).ajaxStop(function(){
+        $('#waiting-indicator1').addClass('invisible');
+        $('#waiting-indicator2').addClass('invisible');
+    });
+
+    $(function() {
+        $('#photo').change(function(){
+            file_input = this;
+            faces = null;
+            $('#img-preview').empty();
+            $('#info').empty();
+            $("#imageUploadForm").submit();
+        });
+    });
+
+    $(document).ready(function(){
+        $("#imageUploadForm").on('submit', function(e){
+            e.preventDefault();
+            var form = new FormData($('#imageUploadForm')[0]);
+            $.ajax({
+                //"crossDomain": true,
+                type: "POST",
+                url: "/idupload",
+                contentType: false,
+                data: form,
+                cache: false,
+                dataType: "json",
+                processData: false,
+                success: function(data) {
+                  filename = data['name'];
+                  $('#img-preview').attr('src', '/static/resources/tmp/' + filename);
+                  faces = (data['faces']);
+                  showFaces(faces);
+                },
+                error : function(xhr, text, error) {
+                    alert("Fail to call API");
+                }
+            });
+        });
+    });
+
+    function showFaces(faces){
+        var info = $('#info');
+        info.append("<table class='table text-center mx-auto' style='width:600px;' id='info-table'></table>");
+        info_table = $("#info-table");
+        $.each(faces, function(index){
+            face = faces[index];
+            info_table.append("<tr>");
+            info_table.append('<td align="center">' + generateImageSrc(face) + '</td>');
+            info_table.append("<td><strong>Found face " + (index + 1) + "</strong></td>");
+            info_table.append("</tr>");
+        });
+
+    }
+
+	function startCamera(){
+		// Get access to the camera!
+		if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+		    // Not adding `{ audio: true }` since we only want video now
+		    navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+		        //video.src = window.URL.createObjectURL(stream);
+		        video.srcObject = stream;
+		        video.play();
+		    });
+		}
+	}
+
+	function stopCamera(){
+        var stream = video.srcObject;
+        var tracks = stream.getTracks();
+        for(var i = 0; i < tracks.length; i ++){
+          var track = tracks[i];
+          track.stop();
+        }
+        video.srcObject = null;
+        context.clearRect(0, 0, canvas.width, canvas.height);
+	}
+
+	function snapshot(){
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        $('#simscore-info').empty();
+		context.drawImage(video, 0, 0, 400, 300);
+        var data_url = canvas.toDataURL('image/png');
+        form_data = new FormData($('#imageform')[0]);
+        form_data.append('photo', dataURItoBlob(data_url));
+        form_data.append('faces', faces);
+		$.ajax({
+            type: 'POST',
+            url: '/facedetect',
+            data: form_data,
+            cache:false,
+            processData:false,
+            contentType:false,
+            dataType: 'json',
+            success: function(faces){
+            	predictions = faces['response']['predictions'];
+                faceFromWebcam = faces['face-from-webcam'];
+                displaySimScores(faceFromWebcam, predictions);
+            }			
+		});
+	}
+
+    function displaySimScores(faceFromWebcam, predictions){
+        $.each(faceFromWebcam, function(index){
+            face = faceFromWebcam[index];
+            results = predictions.find(x => x['id'] == face.replace('.png', '.txt'))['similarVectors'];
+            var info = $('#simscore-info');
+            info.append("<table class='table text-center mx-auto' style='width:600px;' id='simscore-info-table'></table>");
+            info_table = $("#simscore-info-table");
+            found_match = false;
+            $.each(results, function(i){
+                result = results[i];
+                score = (result['score'] * 100).toFixed(2);
+                if(score > parseInt($('#threshold').val())){
+                    info_table.append("<tr>");
+                    info_table.append('<td align="center">' + generateImageSrc(face) + '</td>');
+                    info_table.append('<td align="center">' + generateImageSrc(result['id'].replace('.txt', '.png')) + '</td>');
+                    info_table.append("<td><strong>Similarity:</strong> <b>" + score + "%</b></td>");
+                    info_table.append("</tr>");
+                    found_match = true;
+                }
+            });
+            if(! found_match){
+                info_table.remove();
+                info.append('<h3 class="text-danger">Not Match !!!</h3>');
+            }
+
+        });
+    }
+
+    function dataURItoBlob(dataURI) {
+        var blobBin = atob(dataURI.split(',')[1]);
+        var array = [];
+        for(var i = 0; i < blobBin.length; i++) {
+            array.push(blobBin.charCodeAt(i));
+        }
+        return new Blob([new Uint8Array(array)], {type: 'image/png'});
+    }	
+
+    function generateImageSrc(filename){
+        return "<img src='static/resources/tmp/" + filename + "?i=" + (new Date()).getTime() + "' width='80'>";
+    }
+</script>
+{% endblock %}

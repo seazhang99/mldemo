@@ -1,0 +1,147 @@
+{% extends "layout.html" %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Receipt Recognition</li>
+  </ol>
+</nav>
+	<form id="imageUploadForm" enctype="multipart/form-data" method="post" action="/findsimilarsample" class="mt-4">
+		<div class="form-group row">
+			<label for="photo" class="col-sm-4 col-form-label col-form-label-lg">Choose File</label>
+			<div class="col-sm-6 custom-file">
+				<input type="file" class="custom-file-input" id="photo" name="files">
+				<label class="custom-file-label" for="photo">Choose file</label>
+			</div>
+		</div>
+	</form>
+	<div class="d-flex justify-content-center invisible mt-4" id="waiting-indicator">
+		<div class="spinner-border" role="status">
+			<span class="sr-only">Loading...</span>
+		</div>
+	</div>
+	<div class="row mt-4">
+    <div class="col d-flex justify-content-center">
+		  <canvas id="img-preview"></canvas>
+    </div>
+    <div class="col d-flex justify-content-center">
+      <canvas id="img-replay"></canvas>
+    </div>
+  </div>
+  <div class="row mt-4 invisible" id="info">
+    <table class='table text-center mx-auto' style='width:600px;'>
+      <thead class='thead-dark'>
+        <tr>
+          <th scope='col'>#</th>
+          <th scope='col'>Snapshot</th>
+          <th scope='col'>Text</th>
+          <th scope='col'>Accuray</th>
+        </tr>
+      </thead>
+      <tbody id="info-table"></tbody>     
+    </table>
+  </div>
+	<script>
+    var file_input;
+    var canvas = document.getElementById('img-preview');
+    var ctx = canvas.getContext('2d');
+    var canvas_clone = document.getElementById('img-replay');
+    var ctx_clone = canvas_clone.getContext('2d');
+
+    $(document).ajaxStart(function(){
+        $('#waiting-indicator').removeClass('invisible');            
+    }).ajaxStop(function(){
+        $('#waiting-indicator').addClass('invisible');
+    });
+
+	$(document).ready(function(){
+		$("#imageUploadForm").on('submit', function(e){
+			e.preventDefault();
+			var form = new FormData($('#imageUploadForm')[0]);
+			$.ajax({
+				//"crossDomain": true,
+				type: "POST",
+				url: "/recieptdetect",
+				contentType: false,
+				data: form,
+				cache: false,
+				dataType: "json",
+				processData: false,
+				success: function(res) {
+		            results = res['predictions'][0]['results'];
+		            drawRecipt(results);
+				},
+				error : function(xhr, text, error) {
+					alert("Fail to call API");
+				}
+			});
+		});
+	});
+		
+	$(function() {
+        $('#photo').change(function(){
+        	file_input = this;
+            $('#info-table').empty();
+            $('#info').addClass('invisible');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            $("#imageUploadForm").submit();
+        });
+	});
+
+	function drawRecipt(results){
+          $('#info').removeClass('invisible');
+          var file = file_input.files[0];
+          var reader = new FileReader();
+          reader.onload = function(e){
+            var img = new Image();
+            img.addEventListener("load", function(){
+              canvas.width = img.width;
+              canvas.height = img.height;
+              ctx.drawImage(img, 0, 0, img.width, img.height);
+              canvas_clone.width = canvas.width;
+              canvas_clone.height = canvas.height;
+              showInfo(img, results);
+            });
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+      }
+
+      function showInfo(img, results){
+        info_table = $('#info-table');
+      	$.each(results, function(index){
+      		result = results[index];
+      		box = result['boundingBox'];
+      		text = result['text'];
+      		accuracy = result['bboxAccuracy'];
+      		x1 = box['x1'];
+      		y1 = box['y1'];
+      		w = box['x2'] - x1;
+      		h = box['y4'] - y1;
+      		drawRectOnFace(ctx, x1, y1, w, h, 2, '#ffff00');
+          ctx_clone.fillStyle = "#0a0a0a";
+          //ctx_clone.font = "14px Calibri";
+          ctx_clone.fillText(text, x1, y1);
+
+      		info_table.append("<tr>");
+      		info_table.append("<td>" + (index + 1) + "</td>");
+      		info_table.append("<td class='bg-light'><canvas id='canvas-" + index + "'></canvas></td>");
+      		var tmp_canvas = $('#canvas-' + index)[0];
+      		var tmp_ctx = tmp_canvas.getContext('2d');
+      		tmp_canvas.width = w;
+      		tmp_canvas.height = h;
+      		tmp_ctx.drawImage(img, x1, y1, w, h, 0, 0, tmp_canvas.width, tmp_canvas.height);
+      		//drawRectOnFace(tmp_ctx, 1, 1, tmp_canvas.width - 1, tmp_canvas.height - 1, 3, '#ff0000');
+      		info_table.append("<td class='text-danger font-weight-bolder'>" + text + "</td>");
+      		info_table.append("<td><strong>" + (accuracy * 100).toFixed(2) + "%</strong></td>");
+      		info_table.append("</tr>");
+      	});
+      }
+
+	  function drawRectOnFace(context, x, y, w, h, lineWidth, strokeStyle){
+        context.lineWidth = lineWidth;
+        context.strokeStyle = strokeStyle;
+        context.strokeRect(x, y, w, h);
+      }
+	</script>
+{% endblock %}

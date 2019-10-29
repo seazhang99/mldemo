@@ -1,0 +1,82 @@
+{% extends "layout.html" %}
+{% block content %}
+	<div class="alert alert-secondary" role="alert">
+		<h4 class="alert-heading">Inference Service for Customizable Text Classification</h4>
+		<p>Classify text with 50 categories using a model trained on the Icecat product descriptions.</p>
+		<hr>
+		<p class="mb-0">
+			Input texts will be classified and the results returned synchronously. Result is an array of labels and their probabilities sorted by a score.&nbsp;&nbsp;<a href="https://api.sap.com/api/text_classifier_api/resource" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+		</p>
+	</div>
+	<hr>
+	<form id="textClassificationForm" method="post" action="#" class="mt-4">
+		<div class="input-group mb-3">
+		  <span class="col-sm-2">Input Text</span>
+		  <input type="text" class="form-control col-sm-8" placeholder="I can't access Internet" aria-label="I can't access Internet" aria-describedby="start-classify" id="texts" name="texts">
+		  <div class="input-group-append">
+		    <button class="btn btn-outline-secondary" type="button" id="start-classify"><i class="fa fa-search"></i></button>
+		  </div>
+		</div>
+	</form>
+	<div class="row mt-4" id="info">
+	</div>
+	<script>
+	$(document).ready(function(){
+		$("#textClassificationForm").on('submit', function(e){
+			e.preventDefault();
+			var form = new FormData();
+			form.append("texts", $('#texts').val());
+			$.ajax({
+			  "async": true,
+			  "crossDomain": true,
+			  "url": "https://sandbox.api.sap.com/mlfs/api/v2/text/classification/",
+			  "method": "POST",
+			  "headers": {
+			    "APIKey": "{{ api_key }}",
+			  },
+			  "processData": false,
+			  "contentType": false,
+			  "mimeType": "multipart/form-data",
+			  "data": form,
+			  "dataType": 'json',
+ 			   success: function(data) {
+					results = (data['predictions'][0]['results']);
+					displayInfo(results);
+			   },
+			   error : function(xhr, text, error) {
+					alert("Fail to call API");
+				}
+			});
+		});
+	});
+
+    function displayInfo(results){
+        info = $("#info");
+        info.append("<table class='table text-center mx-auto' style='width:600px;' id='info-table'></table>");
+        $.each(results, function(index){
+            result = results[index];
+            label = result['label'];
+            score = result['score'];
+            if(score > 0.06){ 
+            	appendInfo(label, score); 
+            }
+        });
+    }
+
+    function appendInfo(label, score){
+        info_table = $("#info-table");
+        score = (score * 100).toFixed(2);
+        info_table.append("<tr>");
+        info_table.append("<td><strong>" + label + "</strong></td><td><b>" + score + "%</b></td>");
+        info_table.append("</tr>");
+    }
+
+	$(function() {
+        $('#start-classify').on('click', function(){
+            $('#info').empty();
+            $("#textClassificationForm").submit();
+            //submitForm();
+        });
+	});
+	</script>
+{% endblock %}
