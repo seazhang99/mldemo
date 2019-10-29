@@ -1,0 +1,7 @@
+---
+applications:
+- name: mldemo
+  random-route: true
+  memory: 512M
+  buildpack: python_buildpack
+  command: python server.py
