@@ -10,3 +10,6 @@ This is the demo to show how to use SAP Leonardo Machine Learning API.
 * werkzeug
 * requests
 
+# Update your API Key
+Please get your API Key from https://api.sap.com, and update it to constants.py
+
