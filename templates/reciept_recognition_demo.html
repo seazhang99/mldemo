@@ -43,10 +43,17 @@
   </div>
 	<script>
     var file_input;
-    var canvas = document.getElementById('img-preview');
-    var ctx = canvas.getContext('2d');
-    var canvas_clone = document.getElementById('img-replay');
-    var ctx_clone = canvas_clone.getContext('2d');
+    var canvas;
+    var ctx;
+    var canvas_clone;
+    var ctx_clone;
+
+    window.onload = function(){
+      canvas = document.getElementById('img-preview');
+      ctx = canvas.getContext('2d');
+      canvas_clone = document.getElementById('img-replay');
+      ctx_clone = canvas_clone.getContext('2d');
+    }
 
     $(document).ajaxStart(function(){
         $('#waiting-indicator').removeClass('invisible');            
